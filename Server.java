@@ -14,10 +14,11 @@ public class Server {
 
     public static Stack<Integer> serversAlive = new Stack<Integer>();
 
-    public static boolean shouldResponse(int serverId){
+    public static boolean shouldResponse(int serverId) {
         Iterator<Integer> value = serversAlive.iterator();
         while (value.hasNext()) {
-            if (value.next() < serverId) return false;
+            if (value.next() < serverId)
+                return false;
         }
         return true;
     }
@@ -87,7 +88,7 @@ public class Server {
     }
 
     public static void main(String args[]) {
-        
+
         if (args.length == 0) {
             System.out.println("Informe o identificador do sevidor como argumento");
             System.exit(1);
@@ -114,6 +115,7 @@ public class Server {
 
         try {
             socket = new MulticastSocket(PORT);
+            socket.setLoopbackMode​(true);
             InetAddress group = InetAddress.getByName("224.0.0.0");
             socket.joinGroup(group);
 
@@ -133,7 +135,7 @@ public class Server {
                 } else {
                     System.out.println("Não devo responder...");
                 }
-                
+
                 serversAlive.empty();
             }
         } catch (Exception e) {
