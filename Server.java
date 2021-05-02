@@ -136,7 +136,7 @@ public class Server {
                     System.out.println("Não devo responder...");
                 }
 
-                serversAlive.empty();
+                serversAlive.clear();
             }
         } catch (Exception e) {
             System.out.println("Linha 138: " + e.getMessage());
