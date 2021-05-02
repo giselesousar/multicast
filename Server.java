@@ -8,6 +8,8 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import java.math.*;
+
 import jdk.nashorn.api.tree.Tree;
 
 public class Server {
@@ -59,49 +61,85 @@ public class Server {
         }
     }
 
-    static class ReceiveGroup implements Runnable {
+    // static class ReceiveGroup implements Runnable {
+    // MulticastSocket socket = null;
+    // DatagramPacket inPacket = null;
+    // byte[] inBuffer = new byte[256];
+    // ScriptEngineManager mgr = new ScriptEngineManager();
+    // ScriptEngine engine = mgr.getEngineByName("JavaScript");
+
+    // final int PORT = 8888;
+
+    // public void run() {
+
+    // try {
+    // socket = new MulticastSocket(PORT);
+    // InetAddress group = InetAddress.getByName("224.0.0.0");
+    // socket.joinGroup(group);
+    // while (true) {
+    // inPacket = new DatagramPacket(inBuffer, inBuffer.length);
+    // socket.receive(inPacket);
+    // String received = new String(inPacket.getData());
+    // System.out.println("De: " + inPacket.getAddress() + " mgs: " +
+    // received.trim());
+    // serversAlive.push(Integer.parseInt(received.trim()));
+    // }
+    // } catch (Exception e) {
+    // System.out.println("Linha 82: " + e.getMessage());
+    // }
+    // }
+    // }
+
+    public static void listenToServerGroup() {
         MulticastSocket socket = null;
         DatagramPacket inPacket = null;
         byte[] inBuffer = new byte[256];
-        ScriptEngineManager mgr = new ScriptEngineManager();
-        ScriptEngine engine = mgr.getEngineByName("JavaScript");
 
         final int PORT = 8888;
-
-        public void run() {
-
-            try {
-                socket = new MulticastSocket(PORT);
-                InetAddress group = InetAddress.getByName("224.0.0.0");
-                socket.joinGroup(group);
-                while (true) {
+        try {
+            socket = new MulticastSocket(PORT);
+            InetAddress group = InetAddress.getByName("224.0.0.0");
+            socket.setSoTimeout(500);
+            socket.joinGroup(group);
+            while (true) {
+                try {
                     inPacket = new DatagramPacket(inBuffer, inBuffer.length);
                     socket.receive(inPacket);
                     String received = new String(inPacket.getData());
                     System.out.println("De: " + inPacket.getAddress() + " mgs: " + received.trim());
                     serversAlive.push(Integer.parseInt(received.trim()));
+                } catch (SocketTimeoutException s) {
+                    if (serversAlive.size() <= 0) {
+                        System.out.println("Sem resposta do grupo de servidores. Tente novamente");
+                    }
+                    break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    break;
                 }
-            } catch (Exception e) {
-                System.out.println("Linha 82: " + e.getMessage());
             }
+            socket.close();
+
+        } catch (Exception e) {
+            // erro
         }
     }
 
     public static void main(String args[]) {
 
         if (args.length == 0) {
-            System.out.println("Informe o identificador do sevidor como argumento");
+            System.out.println("Informe o identificador do servidor como argumento");
             System.exit(1);
         }
 
         int serverId = Integer.parseInt(args[0]);
 
         SenderGroup sender = new SenderGroup(serverId);
-        ReceiveGroup receive = new ReceiveGroup();
+        // ReceiveGroup receive = new ReceiveGroup();
         Thread t1 = new Thread(sender);
-        Thread t2 = new Thread(receive);
+        // Thread t2 = new Thread(receive);
         t1.start();
-        t2.start();
+        // t2.start();
 
         MulticastSocket socket = null;
         DatagramPacket inPacket = null;
@@ -124,10 +162,11 @@ public class Server {
                 socket.receive(inPacket);
                 String received = new String(inPacket.getData());
 
-                TimeUnit.SECONDS.sleep(5); // esperando para o array ser preenchido
+                listenToServerGroup();
+                System.out.println("serversAlive: " + serversAlive);
 
                 if (shouldResponse(serverId)) {
-                    result = engine.eval(received.trim()) + "";
+                    result = engine.eval("Math.round(" + received.trim() + ")") + "";
                     outBuffer = result.getBytes();
                     outPacket = new DatagramPacket(outBuffer, outBuffer.length, group, PORT);
                     socket.send(outPacket);
