@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-
 import java.math.*;
 
 public class Server {
@@ -48,7 +47,7 @@ public class Server {
                     socket.send(outPacket);
 
                     try {
-                        TimeUnit.SECONDS.sleep(1);
+                        TimeUnit.MILLISECONDS.sleep(1000);
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
@@ -63,18 +62,18 @@ public class Server {
         MulticastSocket socket = null;
         DatagramPacket inPacket = null;
         byte[] inBuffer = new byte[256];
-        Integer countdown = 5;
+        // Integer countdown = 3;
 
         final int PORT = 8888;
         try {
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName("224.0.0.0");
-            // socket.setSoTimeout(500);
+            socket.setSoTimeout(500);
             socket.joinGroup(group);
             while (true) {
-                if (countdown-- <= 0) {
-                    break;
-                }
+                // if (countdown-- <= 0) {
+                //     break;
+                // }
                 try {
                     inPacket = new DatagramPacket(inBuffer, inBuffer.length);
                     socket.receive(inPacket);
@@ -117,7 +116,6 @@ public class Server {
         DatagramSocket ClientSocket;
         InetAddress ClientAddress;
 
-        byte[] inBuffer = new byte[256];
         byte[] outBuffer;
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine engine = mgr.getEngineByName("JavaScript");
@@ -133,6 +131,7 @@ public class Server {
             ClientSocket = new DatagramSocket();
 
             while (true) {
+                byte[] inBuffer = new byte[256];
                 inPacket = new DatagramPacket(inBuffer, inBuffer.length);
                 socket.receive(inPacket);
                 String received = new String(inPacket.getData());
@@ -142,7 +141,7 @@ public class Server {
                     result = engine.eval(received.trim()) + "";
                     outBuffer = result.getBytes();
 
-                    ClientAddress = InetAddress.getByName(String.valueOf(inPacket.getAddress()));
+                    ClientAddress = InetAddress.getByName(String.valueOf(inPacket.getAddress()).substring(1));
                     outPacket = new DatagramPacket(outBuffer, outBuffer.length, ClientAddress, PORT);
 
                     ClientSocket.send(outPacket);
