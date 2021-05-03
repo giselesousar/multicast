@@ -10,8 +10,6 @@ import javax.script.ScriptException;
 
 import java.math.*;
 
-import jdk.nashorn.api.tree.Tree;
-
 public class Server {
 
     public static Stack<Integer> serversAlive = new Stack<Integer>();
@@ -115,6 +113,10 @@ public class Server {
         MulticastSocket socket = null;
         DatagramPacket inPacket = null;
         DatagramPacket outPacket = null;
+
+        DatagramSocket ClientSocket;
+        InetAddress ClientAddress;
+
         byte[] inBuffer = new byte[256];
         byte[] outBuffer;
         ScriptEngineManager mgr = new ScriptEngineManager();
@@ -128,6 +130,8 @@ public class Server {
             InetAddress group = InetAddress.getByName("224.0.0.0");
             socket.joinGroup(group);
 
+            ClientSocket = new DatagramSocket();
+
             while (true) {
                 inPacket = new DatagramPacket(inBuffer, inBuffer.length);
                 socket.receive(inPacket);
@@ -137,8 +141,11 @@ public class Server {
                 if (shouldResponse(serverId)) {
                     result = engine.eval(received.trim()) + "";
                     outBuffer = result.getBytes();
-                    outPacket = new DatagramPacket(outBuffer, outBuffer.length, group, PORT);
-                    socket.send(outPacket);
+
+                    ClientAddress = InetAddress.getByName(String.valueOf(inPacket.getAddress()));
+                    outPacket = new DatagramPacket(outBuffer, outBuffer.length, ClientAddress, PORT);
+
+                    ClientSocket.send(outPacket);
                     System.out.println("Respondendo para cliente: " + result);
                 } else {
                     System.out.println("Não devo responder...");
