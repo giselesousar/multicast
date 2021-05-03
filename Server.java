@@ -61,52 +61,26 @@ public class Server {
         }
     }
 
-    // static class ReceiveGroup implements Runnable {
-    // MulticastSocket socket = null;
-    // DatagramPacket inPacket = null;
-    // byte[] inBuffer = new byte[256];
-    // ScriptEngineManager mgr = new ScriptEngineManager();
-    // ScriptEngine engine = mgr.getEngineByName("JavaScript");
-
-    // final int PORT = 8888;
-
-    // public void run() {
-
-    // try {
-    // socket = new MulticastSocket(PORT);
-    // InetAddress group = InetAddress.getByName("224.0.0.0");
-    // socket.joinGroup(group);
-    // while (true) {
-    // inPacket = new DatagramPacket(inBuffer, inBuffer.length);
-    // socket.receive(inPacket);
-    // String received = new String(inPacket.getData());
-    // System.out.println("De: " + inPacket.getAddress() + " mgs: " +
-    // received.trim());
-    // serversAlive.push(Integer.parseInt(received.trim()));
-    // }
-    // } catch (Exception e) {
-    // System.out.println("Linha 82: " + e.getMessage());
-    // }
-    // }
-    // }
-
     public static void listenToServerGroup() {
         MulticastSocket socket = null;
         DatagramPacket inPacket = null;
         byte[] inBuffer = new byte[256];
+        Integer countdown = 5;
 
         final int PORT = 8888;
         try {
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName("224.0.0.0");
-            socket.setSoTimeout(500);
+            // socket.setSoTimeout(500);
             socket.joinGroup(group);
             while (true) {
+                if (countdown-- <= 0) {
+                    break;
+                }
                 try {
                     inPacket = new DatagramPacket(inBuffer, inBuffer.length);
                     socket.receive(inPacket);
                     String received = new String(inPacket.getData());
-                    System.out.println("De: " + inPacket.getAddress() + " mgs: " + received.trim());
                     serversAlive.push(Integer.parseInt(received.trim()));
                 } catch (SocketTimeoutException s) {
                     if (serversAlive.size() <= 0) {
@@ -135,11 +109,8 @@ public class Server {
         int serverId = Integer.parseInt(args[0]);
 
         SenderGroup sender = new SenderGroup(serverId);
-        // ReceiveGroup receive = new ReceiveGroup();
         Thread t1 = new Thread(sender);
-        // Thread t2 = new Thread(receive);
         t1.start();
-        // t2.start();
 
         MulticastSocket socket = null;
         DatagramPacket inPacket = null;
@@ -161,12 +132,10 @@ public class Server {
                 inPacket = new DatagramPacket(inBuffer, inBuffer.length);
                 socket.receive(inPacket);
                 String received = new String(inPacket.getData());
-
                 listenToServerGroup();
-                System.out.println("serversAlive: " + serversAlive);
 
                 if (shouldResponse(serverId)) {
-                    result = engine.eval("Math.round(" + received.trim() + ")") + "";
+                    result = engine.eval(received.trim()) + "";
                     outBuffer = result.getBytes();
                     outPacket = new DatagramPacket(outBuffer, outBuffer.length, group, PORT);
                     socket.send(outPacket);

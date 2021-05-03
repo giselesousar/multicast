@@ -43,34 +43,32 @@ public class Client {
         while (true) {
             try {
 
-                //criação da expressão númerica
+                // criação da expressão númerica
                 String msg = new String(ExpressionGenerator.generate(7));
                 System.out.println(msg);
 
-
-                //criação do socket
+                // criação do socket
                 InetAddress group = InetAddress.getByName("224.0.0.0");
                 MulticastSocket s = new MulticastSocket(4444);
 
-                //evita que o nó receba mensagem dele mesmo
+                // evita que o nó receba mensagem dele mesmo
                 s.setLoopbackMode​(true);
 
                 s.joinGroup(group);
 
-                //criação do datagrama que será enviado
+                // criação do datagrama que será enviado
                 DatagramPacket hi = new DatagramPacket(msg.getBytes(), msg.length(), group, 4444);
                 s.send(hi);
 
-                //loop para receber mensagens do grupo de servidores
+                // loop para receber mensagens do grupo de servidores
                 while (true) {
                     try {
                         byte[] buf = new byte[1000];
                         DatagramPacket recv = new DatagramPacket(buf, buf.length);
                         s.receive(recv);
-
                         TimeUnit.SECONDS.sleep(1);
                         String received = new String(recv.getData());
-                        System.out.println(received);
+                        System.out.println("Recebido " + received + " de " + recv.getAddress());
                         break;
                     } catch (Exception e) {
 
