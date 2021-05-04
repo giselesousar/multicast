@@ -44,8 +44,8 @@ public class Client {
             try {
 
                 // criação da expressão númerica
-                String msg = new String(ExpressionGenerator.generate(7));
-                System.out.println(msg);
+                String expressaoAritmetica = new String(ExpressionGenerator.generate(7));
+                System.out.println(expressaoAritmetica);
 
                 // criação do socket
                 InetAddress group = InetAddress.getByName("224.0.0.0");
@@ -57,8 +57,8 @@ public class Client {
                 s.joinGroup(group);
 
                 // criação do datagrama que será enviado
-                DatagramPacket hi = new DatagramPacket(msg.getBytes(), msg.length(), group, 4444);
-                s.send(hi);
+                DatagramPacket datagrama = new DatagramPacket(expressaoAritmetica.getBytes(), expressaoAritmetica.length(), group, 4444);
+                s.send(datagrama);
 
                 // loop para receber mensagens do grupo de servidores
                 while (true) {
